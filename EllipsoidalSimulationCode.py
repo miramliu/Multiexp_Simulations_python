@@ -167,7 +167,7 @@ def findminidx(x):
     return k//ncol, k%ncol
 
 
-def FA(a,b,c):
+def Calc_FA(a,b,c):
     MD = (a+b+c)/3
     num = np.sqrt((a-MD)**2 + (b-MD)**2 + (c-MD)**2)
     denom = np.sqrt(a**2 + b**2 + c**2)
@@ -189,7 +189,7 @@ def NoiseRice(I,sigma): # noise with rician distribution
     #v = 0.00434 #scaled = .79/182
     v = .005816 #scaled 6/27/19
     b = v/sigma
-    r = rice.rvs(b, scale = sigma, size=len(I)
+    r = rice.rvs(b, scale = sigma, size=len(I))
     for i in range(0,len(I)):
         N.append(I[i] +r[i]) #SNR = 1,10,22,100,150,inf
     return N
