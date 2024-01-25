@@ -2,26 +2,9 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as pl
 from scipy.stats import rice
-
-import csv
-
-import scipy.optimize as op
-import scipy.stats
-from scipy.optimize import curve_fit
-import scipy.io
-from scipy.stats import rice
-
-import random
-import pickle
-import seaborn as sns
-
-import numpy as np
-from scipy.stats import ttest_ind, ttest_ind_from_stats, wilcoxon,ttest_rel, pearsonr,shapiro,f_oneway, ranksums
-from scipy.special import stdtr
-import csv
-import pandas as pd
-
 from statistics import mean
+import random
+
 
 # So create ellipsoid, and rotate it to create eigenvalues and eigenvectors (i.e. create anisotropic diffusion ellipsoid)
 # then find Diffusion tensor (knowing eigenvalues and eigenvectors from the ellipsoid)
@@ -187,6 +170,13 @@ def findminidx(x):
     ncol = x.shape[1]
     return k//ncol, k%ncol
 
+
+def Calc_FA(a,b,c):
+    MD = (a+b+c)/3
+    num = np.sqrt((a-MD)**2 + (b-MD)**2 + (c-MD)**2)
+    denom = np.sqrt(a**2 + b**2 + c**2)
+    return np.sqrt(3/2)*num/denom
+
 def Calc_FA(a,b,c):
     MD = (a+b+c)/3
     num = np.sqrt((a-MD)**2 + (b-MD)**2 + (c-MD)**2)
@@ -203,6 +193,7 @@ def GenerateFA_Ellipsoid(FA_want,FAs,abcs):
     val,idx = find_nearest(FAs,FA_want)
     return abcs[idx]#, FA(abcs[idx][0],abcs[idx][1],abcs[idx][2])
     
+
 # NEW RICIAN FUNCTION.From old code. double check calculation of SNSR and sigma? 
 #SNR = 1, sigma = 1
 #SNR = 10, sigma = .1
@@ -212,7 +203,6 @@ def GenerateFA_Ellipsoid(FA_want,FAs,abcs):
 #SNR = 100, sigma = .01
 #SNR = 125, sigma = .008
 #SNR = 150, sigma = .0065
-
 def NoiseRice(I,sigma): # noise with rician distribution
     N = [] 
     #v = .79 # calculated from images on 6/11/19
@@ -284,20 +274,6 @@ def CreateThreeEllipsoidalCompartments(All_FAs, All_rotations):
     fast_compartment = [x_fast,y_fast,z_fast,abc_fast]
     med_compartment = [x_med,y_med,z_med,abc_med]
     slow_compartment = [x_slow,y_slow,z_slow,abc_slow]
-    
-    #show the 3 ellipsoids
-    fig = pl.figure()
-    ax = fig.add_subplot(131,projection='3d')
-    ax.plot_wireframe(x_fast, y_fast, z_fast,  rstride=4, cstride=4, color='b', alpha=0.2)
-    set_axes_equal(ax)
-    ax = fig.add_subplot(132,projection='3d')
-    ax.plot_wireframe(x_med, y_med, z_med,  rstride=4, cstride=4, color='g', alpha=0.2)
-    set_axes_equal(ax)
-    ax = fig.add_subplot(133,projection='3d')
-    ax.plot_wireframe(x_slow, y_slow, z_slow,  rstride=4, cstride=4, color='r', alpha=0.2)
-    set_axes_equal(ax)
-    #pl.savefig('/Users/neuroimaging/Desktop/Ellipsoid_Calc_FA41.png',format='png',dpi=120)
-    pl.show()
     return fast_compartment, med_compartment, slow_compartment
 
 def RotateCompartments(x,y,z,thetaxyz):
@@ -311,6 +287,12 @@ def RotateCompartments(x,y,z,thetaxyz):
 #give true D, the three ellipsoidal compartments in labframe, and the b-value direction (i.e. thetaxyz)
 def GetOrthogonalD_thetas(D_traces,fast_compartment, med_compartment, slow_compartment, thetaxyz):
     
+    #if rotating to measure in different b-value directions. 
+    #now "measured along 3 orthogonal diffusion directions" to get 3 single-direction b-values
+    #rotate by thetaxyz
+    #x_fast,y_fast,z_fast = RotateCompartments(fast_compartment[0],fast_compartment[1],fast_compartment[2],thetaxyz)
+    #x_med,y_med,z_med = RotateCompartments(med_compartment[0],med_compartment[1],med_compartment[2],thetaxyz)
+    #x_slow,y_slow,z_slow = RotateCompartments(slow_compartment[0],slow_compartment[1],slow_compartment[2],thetaxyz)
 
     #now measure along the given b-value direction
     x_theta_fast,y_theta_fast,z_theta_fast = find_axes(fast_compartment[0],fast_compartment[1],fast_compartment[2]) #just get the length of the ellipsoid along the normal axis (i.e. 3 random orthogonal directions)
