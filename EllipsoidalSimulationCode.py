@@ -216,7 +216,9 @@ def NoiseRice(I,sigma): # noise with rician distribution
     return N
 
 def triexp_func(b, frac_fast,frac_med,frac_slow,diff_fast,diff_med,diff_slow):
-    return (1-frac_med-frac_fast)*np.exp(-b*diff_slow)+frac_med*np.exp(-b*diff_med)+frac_fast*np.exp(-b*diff_fast)
+    Data = frac_slow*np.exp(-b*diff_slow)+frac_med*np.exp(-b*diff_med)+frac_fast*np.exp(-b*diff_fast)
+    normal = frac_slow+frac_med+frac_fast
+    return Data/normal
 
 def Scale_Ds(D_traces,abc_s,thetas):
     D_thetas = np.zeros(len(D_traces))
