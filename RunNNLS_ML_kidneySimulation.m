@@ -4,7 +4,27 @@
 %written to work on simulated three compartment kidney ellipsoids
 
 
-function [OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(varargin)
+% Example code to run
+%{
+twopeak_example = [1, 0.836735, 0.77551, 0.744898, 0.663265, 0.520408, 0.469388, 0.153061, 0.0714286]';
+bvals = [0, 10, 30, 50, 80, 120, 200, 400, 800];
+lambda = 8
+[OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(twopeak_example, bvals, lambda);
+Export_Cell = {'example 2peak simpleCVNNLS lambda 8', resultsPeaks',rsq, OutputDiffusionSpectrum'};
+ExcelFileName=['/Users/miraliu/Desktop/PostDocCode/Multiexp_Simulations_python/RA_Spectra.xlsx'];
+writecell(Export_Cell,ExcelFileName,'WriteMode','append','Sheet','SpectralPlots')
+
+% set lambda by hand... 
+
+threepeak_example = [1, 0.935484, 0.822581, 0.798387, 0.73387, 0.580645, 0.419355, 0.274194, 0.129032]';
+bvals = [0, 10, 30, 50, 80, 120, 200, 400, 800];
+lambda = 8;
+[OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(twopeak_example, bvals, lambda);
+Export_Cell = {'example 3peak simpleCVNNLS lambda 8', resultsPeaks',rsq, OutputDiffusionSpectrum'};
+ExcelFileName=['/Users/miraliu/Desktop/PostDocCode/Multiexp_Simulations_python/RA_Spectra.xlsx'];
+writecell(Export_Cell,ExcelFileName,'WriteMode','append','Sheet','SpectralPlots')
+%}
+function [OutputDiffusionSpectrum, rsq, Resid, y_recon, SortedresultsPeaks] = RunNNLS_ML_kidneySimulation(varargin)
 
     addpath /Users/miraliu/Desktop/PostDocCode/Applied_NNLS_renal_DWI/rNNLS/nwayToolbox
     addpath /Users/miraliu/Desktop/PostDocCode/Applied_NNLS_renal_DWI/rNNLS
@@ -16,6 +36,7 @@ function [OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_
 
     SignalInput = varargin{1};
     b_values = varargin{2};
+    lambda = varargin{3};
 
     %% Generate NNLS space of values, not entirely sure about this part, check with TG?
     ADCBasisSteps = 300; %(??)
@@ -35,8 +56,12 @@ function [OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_
 
 
     %% try to git them with NNLS
-    [TempAmplitudes, TempResnorm, TempResid ] = CVNNLS(A, SignalInput);
+    %[TempAmplitudes, TempResnorm, TempResid ] = CVNNLS(A, SignalInput);
     
+    %% with forced regularization of curve
+    [TempAmplitudes, TempResnorm, TempResid ] = simpleCVNNLS_curveregularized(A, SignalInput, lambda);
+    
+
     amplitudes(:) = TempAmplitudes';
     resnorm(:) = TempResnorm';
     resid(1:length(TempResid)) = TempResid';
@@ -62,13 +87,20 @@ function [OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_
     ADCThresh = 1./sqrt([0.180*0.0058 0.0058*0.0015]);
     %[GeoMeanRegionADC_1,GeoMeanRegionADC_2,GeoMeanRegionADC_3,RegionFraction1,RegionFraction2,RegionFraction3 ] = NNLS_resultTG(OutputDiffusionSpectrum, ADCBasis, ADCThresh);
 
-    [GeoMeanRegionADC_1,GeoMeanRegionADC_2,GeoMeanRegionADC_3,RegionFraction1,RegionFraction2,RegionFraction3 ] = NNLS_result_mod_ML(OutputDiffusionSpectrum, ADCBasis);
+    [GeoMeanRegionADC_1,GeoMeanRegionADC_2,GeoMeanRegionADC_3,GeoMeanRegionADC_4,RegionFraction1,RegionFraction2,RegionFraction3,RegionFraction4 ] = NNLS_result_mod_ML_fourpeaks(OutputDiffusionSpectrum, ADCBasis);
     resultsPeaks(1) = RegionFraction1; %(frac_fast - RegionFraction1)./frac_fast.*100;
     resultsPeaks(2) = RegionFraction2; %(frac_med - RegionFraction2)./frac_med.*100;
     resultsPeaks(3) = RegionFraction3; %(frac_slow - )./frac_slow.*100;
-    resultsPeaks(4) = GeoMeanRegionADC_1; %(diff_fast - GeoMeanRegionADC_1./1000)./diff_fast.*100;
-    resultsPeaks(5) = GeoMeanRegionADC_2; %(diff_med - GeoMeanRegionADC_2./1000)./diff_med.*100;
-    resultsPeaks(6) = GeoMeanRegionADC_3; %(diff_slow - GeoMeanRegionADC_3./1000)./diff_slow.*100;
+    resultsPeaks(4) = RegionFraction4; %(frac_fibro - )./frac_slow.*100;
+    resultsPeaks(5) = GeoMeanRegionADC_1; %(diff_fast - GeoMeanRegionADC_1./1000)./diff_fast.*100;
+    resultsPeaks(6) = GeoMeanRegionADC_2; %(diff_med - GeoMeanRegionADC_2./1000)./diff_med.*100;
+    resultsPeaks(7) = GeoMeanRegionADC_3; %(diff_slow - GeoMeanRegionADC_3./1000)./diff_slow.*100;
+    resultsPeaks(8) = GeoMeanRegionADC_4; %(diff_fibro - GeoMeanRegionADC_3./1000)./diff_slow.*100;
+
+
+
+    SortedresultsPeaks = ReSort_fourpeaks(resultsPeaks);
+
 
 end
 
