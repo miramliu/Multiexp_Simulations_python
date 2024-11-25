@@ -191,7 +191,7 @@ def find_nearest(array, value):
 
 def GenerateFA_Ellipsoid(FA_want,FAs,abcs):
     val,idx = find_nearest(FAs,FA_want)
-    return abcs[idx]#, FA(abcs[idx][0],abcs[idx][1],abcs[idx][2])
+    return abcs[idx], val#, FA(abcs[idx][0],abcs[idx][1],abcs[idx][2])
     
 
 # NEW RICIAN FUNCTION.From old code. double check calculation of SNSR and sigma? 
@@ -240,7 +240,10 @@ def generate_rotated_anisotropic_ellipsoid(FA,compartment_rotations):
         #print(abc3)
         FAs[j] = (Calc_FA(abc3[0],abc3[1],abc3[2]))
         abcs[j,:] = abc3
-    abc = GenerateFA_Ellipsoid(FA,FAs,abcs) #getting the ellipsoidal dimensions
+        #print(abc3)
+    abc, nearest_FA = GenerateFA_Ellipsoid(FA,FAs,abcs) #getting the ellipsoidal dimensions
+    if sum(abc)< 0.00000001: # ifi it's very small... set it to 1,1,1 (isotropic.) Nov 14 2024
+        abc=[1,1,1]
     a = abc[0] # i.e. Ax
     b = abc[1] # i.e. By
     c = abc[2] # i.e. Cz
@@ -260,7 +263,7 @@ def generate_rotated_anisotropic_ellipsoid(FA,compartment_rotations):
     for i in range(len(x)):
         for j in range(len(x)):
             [x[i,j],y[i,j],z[i,j]] = np.dot([x[i,j],y[i,j],z[i,j]], rotation) + center
-    return x,y,z,abc
+    return x,y,z,abc,nearest_FA
 
 
 #give all fractional anisotropies and their lab-frame rotations to generate the three compartment ellipsoids up front
@@ -269,14 +272,15 @@ def CreateThreeEllipsoidalCompartments(All_FAs, All_rotations):
     fastrot,medrot,slowrot = All_rotations[0], All_rotations[1], All_rotations[2] #the original ellipsoid rotations (in the lab frame, so not all aligned in same direction)
     
     #create the three compartment ellipsoids rotated in lab-space, and then rotate along the b-value direction
-    x_fast,y_fast,z_fast,abc_fast = generate_rotated_anisotropic_ellipsoid(FA_fast,fastrot) # but then thetaxyz are same for fast, med, slow, because it's measured in the same lab-frame direction
-    x_med,y_med,z_med,abc_med = generate_rotated_anisotropic_ellipsoid(FA_med,medrot)
-    x_slow,y_slow,z_slow,abc_slow = generate_rotated_anisotropic_ellipsoid(FA_slow,slowrot)
+    x_fast,y_fast,z_fast,abc_fast,nearest_FA_fast = generate_rotated_anisotropic_ellipsoid(FA_fast,fastrot) # but then thetaxyz are same for fast, med, slow, because it's measured in the same lab-frame direction
+    x_med,y_med,z_med,abc_med, nearest_FA_med = generate_rotated_anisotropic_ellipsoid(FA_med,medrot)
+    x_slow,y_slow,z_slow,abc_slow, nearest_FA_slow = generate_rotated_anisotropic_ellipsoid(FA_slow,slowrot)
     
     fast_compartment = [x_fast,y_fast,z_fast,abc_fast]
     med_compartment = [x_med,y_med,z_med,abc_med]
     slow_compartment = [x_slow,y_slow,z_slow,abc_slow]
-    return fast_compartment, med_compartment, slow_compartment
+    nearest_FAs = [nearest_FA_fast,nearest_FA_med,nearest_FA_slow]
+    return fast_compartment, med_compartment, slow_compartment, nearest_FAs
 
 def RotateCompartments(x,y,z,thetaxyz):
     center = [0,0,0]
@@ -287,11 +291,11 @@ def RotateCompartments(x,y,z,thetaxyz):
     return x,y,z
 
 #give true D, the three ellipsoidal compartments in labframe, and the b-value direction (i.e. thetaxyz)
-def GetOrthogonalD_thetas(D_traces,fast_compartment, med_compartment, slow_compartment, thetaxyz):
+def GetOrthogonalD_thetas(D_traces,fast_compartment, med_compartment, slow_compartment):
     
     #if rotating to measure in different b-value directions. 
     #now "measured along 3 orthogonal diffusion directions" to get 3 single-direction b-values
-    #rotate by thetaxyz
+    #rotate by thetaxyz ### NO, NO THETAXYZ BECAUSE EVERY B-VAL IS ALONG THE SAME 3 DIRECTIONS, so rotate each individual ellipsoid, but measure along same 3 directions.
     #x_fast,y_fast,z_fast = RotateCompartments(fast_compartment[0],fast_compartment[1],fast_compartment[2],thetaxyz)
     #x_med,y_med,z_med = RotateCompartments(med_compartment[0],med_compartment[1],med_compartment[2],thetaxyz)
     #x_slow,y_slow,z_slow = RotateCompartments(slow_compartment[0],slow_compartment[1],slow_compartment[2],thetaxyz)

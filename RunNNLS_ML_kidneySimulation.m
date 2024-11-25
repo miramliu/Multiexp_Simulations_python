@@ -19,15 +19,40 @@ writecell(Export_Cell,ExcelFileName,'WriteMode','append','Sheet','SpectralPlots'
 threepeak_example = [1, 0.935484, 0.822581, 0.798387, 0.73387, 0.580645, 0.419355, 0.274194, 0.129032]';
 bvals = [0, 10, 30, 50, 80, 120, 200, 400, 800];
 lambda = 8;
-[OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(twopeak_example, bvals, lambda);
+[OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(threepeak_example, bvals, lambda);
 Export_Cell = {'example 3peak simpleCVNNLS lambda 8', resultsPeaks',rsq, OutputDiffusionSpectrum'};
 ExcelFileName=['/Users/miraliu/Desktop/PostDocCode/Multiexp_Simulations_python/RA_Spectra.xlsx'];
 writecell(Export_Cell,ExcelFileName,'WriteMode','append','Sheet','SpectralPlots')
 %}
+
+% running on anomalous data test
+%{
+%11/21/2024
+anomalous_example = [0.97756695, 0.85895991, 0.72244476, 0.63996803, 0.55878782,0.48921553, 0.39920355, 0.26036917, 0.1210697 ]';
+bvals = [0, 10, 30, 50, 80, 120, 200, 400, 800];
+lambda = 8;
+[OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(anomalous_example, bvals, lambda);
+Export_Cell = {'anomalous 3peak simpleCVNNLS lambda 8', resultsPeaks',rsq, OutputDiffusionSpectrum'};
+ExcelFileName=['/Users/miraliu/Desktop/PostDocCode/Multiexp_Simulations_python/RA_Spectra.xlsx'];
+writecell(Export_Cell,ExcelFileName,'WriteMode','append','Sheet','SpectralPlots')
+
+
+% running on ideal 
+%11/21/24
+ideal_example = [1.        , 0.87867133, 0.73877401, 0.65509785, 0.57202138,0.49919888, 0.40768673, 0.26969802, 0.12113794]';
+bvals = [0, 10, 30, 50, 80, 120, 200, 400, 800];
+lambda = 8;
+[OutputDiffusionSpectrum, rsq, Resid, y_recon, resultsPeaks] = RunNNLS_ML_kidneySimulation(ideal_example, bvals, lambda);
+Export_Cell = {'ideal 3peak simpleCVNNLS lambda 8', resultsPeaks',rsq, OutputDiffusionSpectrum'};
+ExcelFileName=['/Users/miraliu/Desktop/PostDocCode/Multiexp_Simulations_python/RA_Spectra.xlsx'];
+writecell(Export_Cell,ExcelFileName,'WriteMode','append','Sheet','SpectralPlots')
+%}
+
 function [OutputDiffusionSpectrum, rsq, Resid, y_recon, SortedresultsPeaks] = RunNNLS_ML_kidneySimulation(varargin)
 
     addpath /Users/miraliu/Desktop/PostDocCode/Applied_NNLS_renal_DWI/rNNLS/nwayToolbox
     addpath /Users/miraliu/Desktop/PostDocCode/Applied_NNLS_renal_DWI/rNNLS
+    addpath /Users/miraliu/Desktop/PostDocCode/DSI_IVIM_Maps/Kidney_DSI
 %    disp(PatientNum)
 
     %list_of_b_values = zeros(length(bvalues),max(bvalues));
